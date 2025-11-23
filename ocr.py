@@ -4,6 +4,7 @@ import re
 import pandas as pd
 from pathlib import Path
 import cv2
+from typing import Any, Dict, List, Optional
 
 def preprocess(image: Path):
     img = cv2.imread(image)
@@ -22,7 +23,7 @@ def preprocess(image: Path):
 def ocr_images(directory: str, extension: str = ".PNG"):
     img_texts = []
     
-    for image in Path(directory).glob(f'*{extension}'):
+    for image in Path(directory).glob(f'*{extension}', case_sensitive=False):
         img = Image.fromarray(preprocess(image))
         
         text = pytesseract.image_to_string(img)
@@ -56,10 +57,53 @@ def parse_ocr_text(img_texts) -> dict:
     return data_for_pd
 
 
+def dict_to_categorical_dataframe(data_dict: Dict[str, Any], rename_map, custom_order: List[str]
+                                 ) -> pd.DataFrame:
+    data_to_process = data_dict.copy()
+
+    df = pd.DataFrame.from_dict(
+        data_to_process, 
+        orient='index', 
+        columns=['Value']
+    )
+    
+    df.rename(index=rename_map, inplace=True)
+    df = df.reset_index()
+    df = df.rename(columns={'index': 'Category'})
+
+    # 1. Add categories that are in custom order but are missing in data
+    order_set = set(custom_order)
+    dict_keys = set(df['Category'].tolist())
+    missing_data_keys = order_set - dict_keys
+    
+    for key in missing_data_keys:
+        df.loc[len(df)] = [key, 0]
+    
+    # 2. Identify categories in the data (now including the zeros) that are NOT in custom_order
+    df_keys = set(df['Category'].tolist())
+    missing_categories_from_order = list(df_keys - order_set)
+    
+    # 3. Define the FINAL categories list
+    categories_list = custom_order + missing_categories_from_order
+    
+    # 4. Apply categorical type and sort immediately
+    df['Category'] = pd.Categorical(
+        df['Category'], 
+        categories=categories_list, 
+        ordered=True
+    )
+    df = df.sort_values(by='Category').reset_index(drop=True)
+
+    return df
+
+
 def main():
     img_texts = ocr_images('src_img')
+    if len(img_texts) == 0:
+        raise ValueError("OCR hasn't found anything")
     data = parse_ocr_text(img_texts)
-
+    
+    # rename categories
     rename_map = {
             # 'Savings'           : '',
             'Household'         : 'Housing',
@@ -68,7 +112,7 @@ def main():
             'Food and Drink'    : 'Restaurants',
             'Travel'            : 'Travel [Flexible spending]',
             # 'Shopping'          : '',
-            # 'Finance'           : '',
+            'Finance'           : 'Finance [Cash]',
             # 'Freetime'          : '',
             # 'Phone'             : '',
             # 'Drinks'            : '',
@@ -76,13 +120,14 @@ def main():
 
         }
 
-    df = pd.DataFrame.from_dict(data).T
-    df.rename(index=rename_map, inplace=True)
-
-    df.sort_index(ascending=False)
+    custom_order = ['Housing','Restaurants','Groceries','Drugstore/Home','Drinks','Shopping',
+                    'Transport','Phone','Freetime','Flexible spending','Savings']
+    df = dict_to_categorical_dataframe(data, rename_map=rename_map, custom_order=custom_order)
     print(df)
-    df.to_csv('ocr.csv', header=False)
-    df.to_clipboard(excel=True, header=False)
+
+    
+    df.to_csv('ocr.csv', header=False, index=False)
+    df.to_clipboard(excel=True, header=False, index=False)
 
 if __name__ == '__main__':
     main()
