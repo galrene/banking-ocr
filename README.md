@@ -17,6 +17,8 @@ pip install pytesseract pillow opencv-python pandas
 ```
 
 ## Usage
+0. Take screenshots and transfer to PC 
+    - transfer has to preserve original file format otherwise ocr preprocessing will fail (ex. e-mail)
 1. Clone the repo
 2. Run the script from the project root:
 ```sh
