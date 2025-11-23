@@ -1,7 +1,6 @@
-
 # Banking OCR
 
-Small script to extract category spending from screenshots and write results to a CSV.
+Small script to extract category spending from **Raiffeisen graphical overview** screenshots and write results to a CSV.
 
 ## Files
 - [ocr.py](ocr.py) — main script
@@ -18,7 +17,8 @@ pip install pytesseract pillow opencv-python pandas
 ```
 
 ## Usage
-Run the script from the project root:
+1. Clone the repo
+2. Run the script from the project root:
 ```sh
 python3 ocr.py
 ```
@@ -35,7 +35,6 @@ This:
 
 ## Notes
 - Ensure the Tesseract executable is installed (e.g., `sudo apt install tesseract-ocr`).
-- OCR accuracy depends on image quality and crop settings.
 
 ## Known issues
 1. Doesn't handle multi-line categories at this time.
