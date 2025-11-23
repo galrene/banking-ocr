@@ -34,6 +34,7 @@ This:
 - Adjust crop coordinates in [`preprocess`](ocr.py) for different screenshot layouts. Currently configured for iPhone 13
 - Change input extension in [`ocr_images`](ocr.py) if images are not `.PNG`.
 - Update `rename_map` in [`main`](ocr.py) to remap categories before saving.
+- Update `custom_orcer` in [`main`](ocr.py) to specify custom output ordering.
 
 ## Notes
 - Ensure the Tesseract executable is installed (e.g., `sudo apt install tesseract-ocr`).
